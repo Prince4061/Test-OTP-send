@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,6 +15,7 @@
             --accent: #3b82f6;
             --accent-hover: #2563eb;
             --success: #10b981;
+            --danger: #ef4444;
         }
 
         body {
@@ -28,7 +30,6 @@
             overflow: hidden;
         }
 
-        /* Abstract Background Elements */
         .circle {
             position: absolute;
             width: 300px;
@@ -38,8 +39,17 @@
             filter: blur(80px);
             z-index: 0;
         }
-        .circle-1 { top: -100px; left: -100px; }
-        .circle-2 { bottom: -100px; right: -100px; background: rgba(139, 92, 246, 0.15); }
+
+        .circle-1 {
+            top: -100px;
+            left: -100px;
+        }
+
+        .circle-2 {
+            bottom: -100px;
+            right: -100px;
+            background: rgba(139, 92, 246, 0.15);
+        }
 
         .container {
             z-index: 10;
@@ -57,6 +67,11 @@
             padding: 40px 32px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
             text-align: center;
+            transition: border-color 0.4s ease;
+        }
+
+        .card.system-off {
+            border-color: rgba(239, 68, 68, 0.4);
         }
 
         h1 {
@@ -72,13 +87,116 @@
         p.subtitle {
             color: #94a3b8;
             font-size: 0.95rem;
-            margin-bottom: 32px;
+            margin-bottom: 24px;
         }
 
+        /* ===== MASTER TOGGLE SWITCH ===== */
+        .master-toggle-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            margin-bottom: 28px;
+            padding: 16px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+
+        .master-toggle-wrapper.on {
+            background: rgba(16, 185, 129, 0.08);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .master-toggle-wrapper.off {
+            background: rgba(239, 68, 68, 0.08);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .toggle-label {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #94a3b8;
+            min-width: 80px;
+            text-align: right;
+        }
+
+        .toggle-label.active-label {
+            color: var(--success);
+        }
+
+        .toggle-label.inactive-label {
+            color: var(--danger);
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 32px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ef4444;
+            border-radius: 32px;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 24px;
+            width: 24px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            border-radius: 50%;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        input:checked+.slider {
+            background-color: var(--success);
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(28px);
+        }
+
+        .toggle-status-text {
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            min-width: 40px;
+            text-align: left;
+        }
+
+        /* ===== GROUP BUTTONS ===== */
         .btn-group {
             display: flex;
             flex-direction: column;
             gap: 16px;
+            transition: opacity 0.3s ease;
+        }
+
+        .btn-group.disabled {
+            opacity: 0.35;
+            pointer-events: none;
+            filter: grayscale(0.5);
         }
 
         .group-btn {
@@ -131,41 +249,42 @@
             color: #94a3b8;
             min-height: 20px;
             font-weight: 500;
-            opacity: 0;
-            animation: fadeInOut 2.5s ease forwards;
         }
-
-        .status.show {
-            opacity: 1;
-            animation: none;
-        }
-
-        @keyframes fadeInOut {
-            0% { opacity: 0; transform: translateY(5px); }
-            10% { opacity: 1; transform: translateY(0); }
-            80% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(0); }
-        }
-
     </style>
 </head>
+
 <body>
     <div class="circle circle-1"></div>
     <div class="circle circle-2"></div>
-    
+
     <div class="container">
-        <div class="card">
+        <div class="card {% if not system_active %}system-off{% endif %}" id="mainCard">
             <h1>n8n Switchboard</h1>
-            <p class="subtitle">Select the active webhook routing group.</p>
-            
-            <div class="btn-group">
-                <button class="group-btn {% if active_group == 'group_1' %}active{% endif %}" onclick="setGroup('group_1', this)">
+            <p class="subtitle">Control OTP forwarding routing.</p>
+
+            <!-- MASTER ON/OFF TOGGLE -->
+            <div class="master-toggle-wrapper {% if system_active %}on{% else %}off{% endif %}" id="toggleWrapper">
+                <span class="toggle-label {% if not system_active %}inactive-label{% endif %}" id="offLabel">OFF</span>
+                <label class="switch" title="Toggle system ON or OFF">
+                    <input type="checkbox" id="masterToggle" {% if system_active %}checked{% endif %}
+                        onchange="toggleSystem(this)">
+                    <span class="slider"></span>
+                </label>
+                <span class="toggle-label {% if system_active %}active-label{% endif %}" id="onLabel">ON</span>
+            </div>
+
+            <!-- GROUP SELECTION BUTTONS -->
+            <div class="btn-group {% if not system_active %}disabled{% endif %}" id="btnGroup">
+                <button class="group-btn {% if active_group == 'group_1' %}active{% endif %}" id="btn-group_1"
+                    onclick="setGroup('group_1', this)">
                     <div class="indicator"></div> Group 1
                 </button>
-                <button class="group-btn {% if active_group == 'group_2' %}active{% endif %}" onclick="setGroup('group_2', this)">
+                <button class="group-btn {% if active_group == 'group_2' %}active{% endif %}" id="btn-group_2"
+                    onclick="setGroup('group_2', this)">
                     <div class="indicator"></div> Group 2
                 </button>
-                <button class="group-btn {% if active_group == 'group_3' %}active{% endif %}" onclick="setGroup('group_3', this)">
+                <button class="group-btn {% if active_group == 'group_3' %}active{% endif %}" id="btn-group_3"
+                    onclick="setGroup('group_3', this)">
                     <div class="indicator"></div> Group 3
                 </button>
             </div>
@@ -175,39 +294,84 @@
     </div>
 
     <script>
+        function updateUI(isActive) {
+            const wrapper = document.getElementById('toggleWrapper');
+            const card = document.getElementById('mainCard');
+            const btnGroup = document.getElementById('btnGroup');
+            const offLabel = document.getElementById('offLabel');
+            const onLabel = document.getElementById('onLabel');
+
+            if (isActive) {
+                wrapper.classList.remove('off');
+                wrapper.classList.add('on');
+                card.classList.remove('system-off');
+                btnGroup.classList.remove('disabled');
+                offLabel.classList.remove('inactive-label');
+                onLabel.classList.add('active-label');
+            } else {
+                wrapper.classList.remove('on');
+                wrapper.classList.add('off');
+                card.classList.add('system-off');
+                btnGroup.classList.add('disabled');
+                onLabel.classList.remove('active-label');
+                offLabel.classList.add('inactive-label');
+            }
+        }
+
+        function toggleSystem(checkbox) {
+            const isActive = checkbox.checked;
+            const statusMsg = document.getElementById('statusMsg');
+            statusMsg.textContent = 'Updating...';
+
+            fetch('/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ active: isActive })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        updateUI(isActive);
+                        statusMsg.textContent = isActive ? '✅ System is now ON — OTPs will be forwarded.' : '🔴 System is OFF — OTPs will NOT be forwarded.';
+                    } else {
+                        statusMsg.textContent = '❌ Error toggling system.';
+                        checkbox.checked = !isActive;
+                    }
+                })
+                .catch(err => {
+                    statusMsg.textContent = '❌ Network Error!';
+                    checkbox.checked = !isActive;
+                    console.error(err);
+                });
+        }
+
         function setGroup(groupId, btnElement) {
-            // Remove active classes visually immediately for better UX
             document.querySelectorAll('.group-btn').forEach(btn => btn.classList.remove('active'));
             btnElement.classList.add('active');
 
             const statusMsg = document.getElementById('statusMsg');
             statusMsg.textContent = 'Updating...';
-            statusMsg.classList.add('show');
 
             fetch('/', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ group: groupId })
             })
-            .then(res => res.json())
-            .then(data => {
-                if(data.success) {
-                    statusMsg.textContent = '✅ Active Route changed to ' + (groupId === 'group_1' ? 'Group 1' : groupId === 'group_2' ? 'Group 2' : 'Group 3');
-                    // Reset animation trick
-                    statusMsg.classList.remove('show');
-                    void statusMsg.offsetWidth; 
-                    statusMsg.style.animation = 'fadeInOut 3s ease forwards';
-                } else {
-                    statusMsg.textContent = '❌ Error updating group.';
-                }
-            })
-            .catch(err => {
-                statusMsg.textContent = '❌ Network Error!';
-                console.error(err);
-            });
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        const names = { group_1: 'Group 1', group_2: 'Group 2', group_3: 'Group 3' };
+                        statusMsg.textContent = '✅ Active Route changed to ' + names[groupId];
+                    } else {
+                        statusMsg.textContent = '❌ Error updating group.';
+                    }
+                })
+                .catch(err => {
+                    statusMsg.textContent = '❌ Network Error!';
+                    console.error(err);
+                });
         }
     </script>
 </body>
+
 </html>
