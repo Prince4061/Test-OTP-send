@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>n8n Route Controller</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f172a;
+            --bg-secondary: #1e1b4b;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text: #f8fafc;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --success: #10b981;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg), var(--bg-secondary));
+            color: var(--text);
+            font-family: 'Inter', system-ui, sans-serif;
+            display: flex;
+            height: 100vh;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        /* Abstract Background Elements */
+        .circle {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: rgba(59, 130, 246, 0.15);
+            filter: blur(80px);
+            z-index: 0;
+        }
+        .circle-1 { top: -100px; left: -100px; }
+        .circle-2 { bottom: -100px; right: -100px; background: rgba(139, 92, 246, 0.15); }
+
+        .container {
+            z-index: 10;
+            width: 100%;
+            max-width: 420px;
+            padding: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 40px 32px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 8px;
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            margin-bottom: 32px;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .group-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            color: #e2e8f0;
+            padding: 18px 24px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .group-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .group-btn.active {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: var(--accent);
+            color: white;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3), inset 0 0 0 1px var(--accent);
+        }
+
+        .group-btn .indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #475569;
+            transition: background 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .group-btn.active .indicator {
+            background: var(--success);
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        .status {
+            margin-top: 28px;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            min-height: 20px;
+            font-weight: 500;
+            opacity: 0;
+            animation: fadeInOut 2.5s ease forwards;
+        }
+
+        .status.show {
+            opacity: 1;
+            animation: none;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(5px); }
+            10% { opacity: 1; transform: translateY(0); }
+            80% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(0); }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="circle circle-1"></div>
+    <div class="circle circle-2"></div>
+    
+    <div class="container">
+        <div class="card">
+            <h1>n8n Switchboard</h1>
+            <p class="subtitle">Select the active webhook routing group.</p>
+            
+            <div class="btn-group">
+                <button class="group-btn {% if active_group == 'group_1' %}active{% endif %}" onclick="setGroup('group_1', this)">
+                    <div class="indicator"></div> Group 1
+                </button>
+                <button class="group-btn {% if active_group == 'group_2' %}active{% endif %}" onclick="setGroup('group_2', this)">
+                    <div class="indicator"></div> Group 2
+                </button>
+                <button class="group-btn {% if active_group == 'group_3' %}active{% endif %}" onclick="setGroup('group_3', this)">
+                    <div class="indicator"></div> Group 3
+                </button>
+            </div>
+
+            <div class="status" id="statusMsg"></div>
+        </div>
+    </div>
+
+    <script>
+        function setGroup(groupId, btnElement) {
+            // Remove active classes visually immediately for better UX
+            document.querySelectorAll('.group-btn').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+
+            const statusMsg = document.getElementById('statusMsg');
+            statusMsg.textContent = 'Updating...';
+            statusMsg.classList.add('show');
+
+            fetch('/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ group: groupId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    statusMsg.textContent = '✅ Active Route changed to ' + (groupId === 'group_1' ? 'Group 1' : groupId === 'group_2' ? 'Group 2' : 'Group 3');
+                    // Reset animation trick
+                    statusMsg.classList.remove('show');
+                    void statusMsg.offsetWidth; 
+                    statusMsg.style.animation = 'fadeInOut 3s ease forwards';
+                } else {
+                    statusMsg.textContent = '❌ Error updating group.';
+                }
+            })
+            .catch(err => {
+                statusMsg.textContent = '❌ Network Error!';
+                console.error(err);
+            });
+        }
+    </script>
+</body>
+</html>
