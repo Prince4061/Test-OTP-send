@@ -30,7 +30,7 @@ def index():
     state = get_state()
     if request.method == 'POST':
         data = request.json
-        if data and 'group' in data and data['group'] in ['group_1', 'group_2', 'group_3']:
+        if data and 'group' in data and data['group'] in ['group_1', 'group_2', 'group_3', 'group_4', 'group_5']:
             state['active_group'] = data['group']
             set_state(state)
             return jsonify({"success": True, "active_group": state['active_group']})

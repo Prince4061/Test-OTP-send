@@ -287,6 +287,14 @@
                     onclick="setGroup('group_3', this)">
                     <div class="indicator"></div> Group 3
                 </button>
+                <button class="group-btn {% if active_group == 'group_4' %}active{% endif %}" id="btn-group_4"
+                    onclick="setGroup('group_4', this)">
+                    <div class="indicator"></div> Group 4
+                </button>
+                <button class="group-btn {% if active_group == 'group_5' %}active{% endif %}" id="btn-group_5"
+                    onclick="setGroup('group_5', this)">
+                    <div class="indicator"></div> Group 5
+                </button>
             </div>
 
             <div class="status" id="statusMsg"></div>
@@ -360,7 +368,7 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
-                        const names = { group_1: 'Group 1', group_2: 'Group 2', group_3: 'Group 3' };
+                        const names = { group_1: 'Group 1', group_2: 'Group 2', group_3: 'Group 3', group_4: 'Group 4', group_5: 'Group 5' };
                         statusMsg.textContent = '✅ Active Route changed to ' + names[groupId];
                     } else {
                         statusMsg.textContent = '❌ Error updating group.';
